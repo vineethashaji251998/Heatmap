@@ -1,0 +1,48 @@
+import os
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+input_file_path = r"XXX\mRNA_expression.csv"
+output_dir = os.path.dirname(input_file_path)
+
+try:
+    data = pd.read_csv(input_file_path, index_col=0)
+    numeric_data = data.apply(pd.to_numeric, errors='coerce')
+    numeric_data = numeric_data.dropna(axis=0, how='all').dropna(axis=1, how='all').transpose()
+
+    rows, cols = numeric_data.shape
+    figsize = (min(50, cols / 50), min(200, rows / 10))
+    print(f"Figure size set to: {figsize}")
+
+    plt.figure(figsize=figsize)
+    sns.heatmap(
+        numeric_data,
+        cmap="YlGnBu",
+        annot=False,
+        cbar=True,
+        xticklabels=cols // 50 if cols > 50 else True,
+        yticklabels=rows // 50 if rows > 50 else True,
+    )
+    plt.xlabel("Genes", fontsize=12)
+    plt.ylabel("Samples", fontsize=12)
+    plt.title(f"Heatmap: {os.path.basename(input_file_path)} (Transposed)", fontsize=14)
+
+    base_name = os.path.splitext(os.path.basename(input_file_path))[0]
+    output_png = os.path.join(output_dir, f"heatmap_{base_name}_transposed.png")
+    output_pdf = os.path.join(output_dir, f"heatmap_{base_name}_transposed.pdf")
+    output_svg = os.path.join(output_dir, f"heatmap_{base_name}_transposed.svg")
+
+    plt.savefig(output_png, dpi=300, bbox_inches='tight')
+    plt.savefig(output_pdf, dpi=300, bbox_inches='tight', format='pdf')
+    plt.savefig(output_svg, dpi=300, bbox_inches='tight', format='svg')
+    plt.close()
+
+    print(f"Heatmaps saved as: {output_png}, {output_pdf}, {output_svg}")
+
+except pd.errors.EmptyDataError:
+    print(f"The file {input_file_path} is empty or invalid.")
+except FileNotFoundError:
+    print(f"The file {input_file_path} was not found.")
+except Exception as e:
+    print(f"An unexpected error occurred: {e}")
